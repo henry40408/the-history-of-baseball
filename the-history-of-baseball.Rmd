@@ -39,7 +39,7 @@ fieldings.raw <- read.csv("raw/fielding.csv")
 library(data.table)
 fieldings.table <- data.table(fieldings.raw)
 fieldings.aggregated <- fieldings.table[, mean(e, na.rm=TRUE), by=pos]
-names(fieldings.aggregated) <- c("Position", "Mean of error rate")
+names(fieldings.aggregated) <- c("position", "error_rate_mean")
 ```
 
 輸出資料。
@@ -51,7 +51,7 @@ DT::datatable(fieldings.aggregated)
 
 ### 結論
 
-1. 位置 **SS** 平均有最高的失誤率。
+1. 位置 **`r fieldings.aggregated$position[1]`** 平均有最高的失誤率。
 2. DH 是 **指定打擊**，不記錄失誤率，因此分析結果會顯示 **NA**。
 
 ## When do players at different positions peak?
@@ -65,6 +65,38 @@ DT::datatable(fieldings.aggregated)
 ## How many walks does it take for a starting pitcher to get pulled?
 
 > 多少次保送會讓先發球員被換下來?
+
+載入原始資料，這次使用的是 `raw/picthing.csv`，表格包含每季比賽 **球員** (`player_id`, player) 、 **先發次數** (`gs`, games started) 與 **季保送次數** (`bb`, walks)。
+
+```{r}
+pitchings.raw <- read.csv("raw/pitching.csv")
+```
+
+一樣使用 `data.table` 分析數據。
+
+```{r}
+library(data.table)
+pitchings.table <- data.table(pitchings.raw)
+```
+
+以球員為資料分組，取得球員每季平均每場比賽保送次數。由於球員一旦被換下場之後就不會再上場，所以不必擔心需要合併計算的問題。
+
+```{r}
+walks_per_game <- function(gs, bb) ifelse(!gs, 0, bb/gs)
+pitchings.walks_per_game <- pitchings.table[, c("wpg") := walks_per_game(pitchings.table$gs, pitchings.table$bb), with=FALSE]
+pitchings.aggregated <- pitchings.walks_per_game[, mean(wpg, na.rm=TRUE), by=player_id]
+names(pitchings.aggregated) <- c("player", "walks_mean")
+```
+
+再統計所有球員的平均。
+
+```{r}
+mean(pitchings.aggregated$walks_mean)
+```
+
+### 結論
+
+球員每場平均投出 **`r mean(pitchings.aggregated$walks_mean)`** 次保送會被換下場。
 
 ## Do players with a high ground into double play (GIDP) have a lower batting average?
 
