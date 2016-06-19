@@ -1,0 +1,79 @@
+---
+title: "The History of Baseball"
+author: "Heng-Yi Wu <101306008@nccu.edu.tw>"
+date: "2016年6月19日"
+output: html_document
+---
+
+# The History of Baseball
+
+> Source: [https://www.kaggle.com/kaggle/the-history-of-baseball](https://www.kaggle.com/kaggle/the-history-of-baseball)
+
+We have more ideas for analysis than games in a season, but here are a few we’d really love to see:
+
+```{r setup, include=FALSE}
+if (!require("data.table")) {
+  install.packages("data.table", repos="http://cran.rstudio.com/")
+}
+
+if (!require("DT")) {
+  install.packages("DT", repos="http://cran.rstudio.com/")
+}
+```
+
+## Is there a most error-prone position?
+
+> 在棒球中有一個失誤率最高的守備位置嗎?
+
+### 分析
+
+輸入資料，根據 `README`，守備位置與失誤率的資料放在 `fielding.csv`。
+
+```{r}
+fieldings.raw <- read.csv("raw/fielding.csv")
+```
+
+使用 `data.table` 依據 **守備位置** (`pos`, position) 分組，計算平均失誤率。
+
+```{r}
+library(data.table)
+fieldings.table <- data.table(fieldings.raw)
+fieldings.aggregated <- fieldings.table[, mean(e, na.rm=TRUE), by=pos]
+names(fieldings.aggregated) <- c("Position", "Mean of error rate")
+```
+
+輸出資料。
+
+```{r}
+library(DT)
+DT::datatable(fieldings.aggregated)
+```
+
+### 結論
+
+1. 位置 **SS** 平均有最高的失誤率。
+2. DH 是 **指定打擊**，不記錄失誤率，因此分析結果會顯示 **NA**。
+
+## When do players at different positions peak?
+
+> 各個不同位置的球員的巔峰期分別在什麼時候?
+
+## Are the best performers selected for all-star game?
+
+> 被選進明星賽的都是表現最好的球員嗎?
+
+## How many walks does it take for a starting pitcher to get pulled?
+
+> 多少次保送會讓先發球員被換下來?
+
+## Do players with a high ground into double play (GIDP) have a lower batting average?
+
+> 容易打出滾地安打的球員會有比較低的打擊率嗎?
+
+## Which players are the most likely to choke during the post-season?
+
+> 哪位球員最容易在季後在被逆轉?
+
+## Why should or shouldn’t the National League adopt the designated hitter rule?
+
+> 聯盟應不應該採用指定打擊(不用守備只要打擊)的規則? 為什麼?
