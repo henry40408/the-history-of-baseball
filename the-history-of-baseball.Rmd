@@ -66,6 +66,8 @@ DT::datatable(fieldings.aggregated)
 
 > 多少次保送會讓先發球員被換下來?
 
+### 分析
+
 載入原始資料，這次使用的是 `raw/picthing.csv`，表格包含每季比賽 **球員** (`player_id`, player) 、 **先發次數** (`gs`, games started) 與 **季保送次數** (`bb`, walks)。
 
 ```{r}
@@ -101,6 +103,39 @@ mean(pitchings.aggregated$walks_mean)
 ## Do players with a high ground into double play (GIDP) have a lower batting average?
 
 > 容易打出滾地安打的球員會有比較低的打擊率嗎?
+
+### 分析
+
+首先定義打擊率公式。
+
+```{r}
+batting_rate <- function(h, ab) ifelse(ab == 0, 0, h / ab)
+```
+
+導入打擊者資料。
+
+```{r}
+battings.raw <- read.csv("raw/batting.csv")
+battings.table <- data.table(battings.raw)
+```
+
+為每位打者加上打擊率資料。
+
+```{r}
+battings.with_rate <- battings.table[, c("rate") := batting_rate(battings.table$ab, battings.table$h), with=FALSE]
+battings.gidp_rate <- battings.with_rate[, c("g_idp", "rate"), with=FALSE]
+battings.cor <- battings.gidp_rate[, c("cor") := cor(g_idp, rate), with=FALSE]
+```
+
+最後使用相關係數分析。
+
+```{r}
+cor(battings.gidp_rate$g_idp, battings.gidp_rate$rate, use="complete")
+```
+
+### 結論
+
+GIDP 與打擊率之間的相關係數為 **`r cor(battings.gidp_rate$g_idp, battings.gidp_rate$rate, use="complete")`**，屬於 **中度相關**，亦即 GIDP 與打擊率有一定關係。
 
 ## Which players are the most likely to choke during the post-season?
 
