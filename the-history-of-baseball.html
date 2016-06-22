@@ -150,8 +150,8 @@ names(fieldings.aggregated) &lt;- c(&quot;position&quot;, &quot;error_rate_mean&
 <p>輸出資料。</p>
 <pre class="r"><code>library(DT)
 DT::datatable(fieldings.aggregated)</code></pre>
-<div id="htmlwidget-4109" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-4109">{"x":{"data":[["1","2","3","4","5","6","7","8","9","10","11"],["SS","2B","OF","C","1B","3B","P","LF","RF","CF","DH"],[9.60904670949818,6.16286953094206,3.25531536023363,5.4592479309104,3.72109601247494,6.15562292478706,1.10618486633439,1.00236714404071,1.08293713681986,1.3540799710512,null]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> \u003c/th>\n      <th>position\u003c/th>\n      <th>error_rate_mean\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"columnDefs":[{"className":"dt-right","targets":2},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"callback":null,"filter":"none"},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-9387" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-9387">{"x":{"data":[["1","2","3","4","5","6","7","8","9","10","11"],["SS","2B","OF","C","1B","3B","P","LF","RF","CF","DH"],[9.60904670949818,6.16286953094206,3.25531536023363,5.4592479309104,3.72109601247494,6.15562292478706,1.10618486633439,1.00236714404071,1.08293713681986,1.3540799710512,null]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> \u003c/th>\n      <th>position\u003c/th>\n      <th>error_rate_mean\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"columnDefs":[{"className":"dt-right","targets":2},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"callback":null,"filter":"none"},"evals":[],"jsHooks":[]}</script>
 </div>
 <div class="section level3">
 <h3>結論</h3>
@@ -221,7 +221,7 @@ battings.cor &lt;- battings.gidp_rate[, c(&quot;cor&quot;) := cor(g_idp, rate), 
 </div>
 <div id="-2" class="section level3">
 <h3>結論</h3>
-<p>GIDP 與打擊率之間的相關係數為 <strong>0.0401226</strong>，屬於 <strong>中度相關</strong>，亦即 GIDP 與打擊率有一定關係。</p>
+<p>GIDP 與打擊率之間的相關係數為 <strong>0.0401226</strong>，屬於 <strong>低度相關</strong> (<code>0 &lt; r &lt; 0.3</code>)，即 GIDP 與打擊率 <strong>幾乎沒有關聯</strong>，亦即原題目論述 <strong>不成立</strong>。</p>
 </div>
 </div>
 <div id="which-players-are-the-most-likely-to-choke-during-the-post-season" class="section level2">

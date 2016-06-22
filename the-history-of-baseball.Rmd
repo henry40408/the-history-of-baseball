@@ -135,7 +135,7 @@ cor(battings.gidp_rate$g_idp, battings.gidp_rate$rate, use="complete")
 
 ### 結論
 
-GIDP 與打擊率之間的相關係數為 **`r cor(battings.gidp_rate$g_idp, battings.gidp_rate$rate, use="complete")`**，屬於 **中度相關**，亦即 GIDP 與打擊率有一定關係。
+GIDP 與打擊率之間的相關係數為 **`r cor(battings.gidp_rate$g_idp, battings.gidp_rate$rate, use="complete")`**，屬於 **低度相關** (`0 < r < 0.3`)，即 GIDP 與打擊率 **幾乎沒有關聯**，亦即原題目論述 **不成立**。
 
 ## Which players are the most likely to choke during the post-season?
 
