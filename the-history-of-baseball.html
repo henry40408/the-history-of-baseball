@@ -133,6 +133,8 @@ $(document).ready(function () {
 <p>Source: <a href="https://www.kaggle.com/kaggle/the-history-of-baseball" class="uri">https://www.kaggle.com/kaggle/the-history-of-baseball</a></p>
 </blockquote>
 <p>We have more ideas for analysis than games in a season, but here are a few we’d really love to see:</p>
+<p>首先定義打擊率公式。</p>
+<pre class="r"><code>batting_rate &lt;- function(h, ab) ifelse(ab == 0, 0, h / ab)</code></pre>
 <div id="is-there-a-most-error-prone-position" class="section level2">
 <h2>Is there a most error-prone position?</h2>
 <blockquote>
@@ -150,8 +152,8 @@ names(fieldings.aggregated) &lt;- c(&quot;position&quot;, &quot;error_rate_mean&
 <p>輸出資料。</p>
 <pre class="r"><code>library(DT)
 DT::datatable(fieldings.aggregated)</code></pre>
-<div id="htmlwidget-9387" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-9387">{"x":{"data":[["1","2","3","4","5","6","7","8","9","10","11"],["SS","2B","OF","C","1B","3B","P","LF","RF","CF","DH"],[9.60904670949818,6.16286953094206,3.25531536023363,5.4592479309104,3.72109601247494,6.15562292478706,1.10618486633439,1.00236714404071,1.08293713681986,1.3540799710512,null]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> \u003c/th>\n      <th>position\u003c/th>\n      <th>error_rate_mean\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"columnDefs":[{"className":"dt-right","targets":2},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"callback":null,"filter":"none"},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-8231" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-8231">{"x":{"data":[["1","2","3","4","5","6","7","8","9","10","11"],["SS","2B","OF","C","1B","3B","P","LF","RF","CF","DH"],[9.60904670949818,6.16286953094206,3.25531536023363,5.4592479309104,3.72109601247494,6.15562292478706,1.10618486633439,1.00236714404071,1.08293713681986,1.3540799710512,null]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> \u003c/th>\n      <th>position\u003c/th>\n      <th>error_rate_mean\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"columnDefs":[{"className":"dt-right","targets":2},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"callback":null,"filter":"none"},"evals":[],"jsHooks":[]}</script>
 </div>
 <div class="section level3">
 <h3>結論</h3>
@@ -166,6 +168,60 @@ DT::datatable(fieldings.aggregated)</code></pre>
 <blockquote>
 <p>各個不同位置的球員的巔峰期分別在什麼時候?</p>
 </blockquote>
+<p>分成 <strong>投手</strong> 跟 <strong>打擊者</strong>。在開始之前先整理選手的資料表 <code>raw/player.csv</code> 方便之後取得 <strong>選手</strong> (<code>player_id</code>) 與 <strong>出生年</strong> (<code>birth_year</code>)。</p>
+<pre class="r"><code>players.raw &lt;- read.csv(&quot;raw/player.csv&quot;)
+players.table &lt;- data.table(data.frame(players.raw$player_id, players.raw$birth_year))
+names(players.table) &lt;- c(&quot;player_id&quot;, &quot;birth_year&quot;)
+setkey(players.table, player_id)</code></pre>
+<div class="section level3">
+<h3>投手</h3>
+<div id="-1" class="section level4">
+<h4>分析</h4>
+<p>選取 <code>raw/pitching.csv</code>，以 <strong>選手</strong> (<code>player_id</code>) 為分群依據，篩選選手生涯 <strong>ERA 最低</strong> 的年份。</p>
+<pre class="r"><code>pitchings.raw &lt;- read.csv(&quot;raw/pitching.csv&quot;)
+
+pitchings.year_player_id_era &lt;- data.table(data.frame(pitchings.raw$year, pitchings.raw$player_id, pitchings.raw$era))
+names(pitchings.year_player_id_era) &lt;- c(&quot;year&quot;, &quot;player_id&quot;, &quot;era&quot;)
+
+pitchings.player_min_era &lt;- pitchings.year_player_id_era[, .SD[which.min(era)], by=player_id]
+setkey(pitchings.player_min_era, player_id)</code></pre>
+<p>合併 <code>pitchings.player_min_era</code> 與 <code>players.table</code> 兩張表。</p>
+<pre class="r"><code>pitchings.with_birth_year &lt;- merge(players.table, pitchings.player_min_era)
+pitchings.with_age &lt;- pitchings.with_birth_year[, age := year - birth_year]</code></pre>
+<p>計算選手在巔峰年時的年齡。</p>
+<pre class="r"><code>mean(pitchings.with_age$age, na.rm=TRUE)</code></pre>
+<pre><code>## [1] 26.40587</code></pre>
+</div>
+<div id="-1" class="section level4">
+<h4>結論</h4>
+<p>以投手而言，選手的巔峰年齡約在 <strong>26</strong> 歲時。</p>
+</div>
+</div>
+<div class="section level3">
+<h3>打擊者</h3>
+<div id="-2" class="section level4">
+<h4>分析</h4>
+<p>選取 <code>raw/batting.csv</code>，以 <strong>選手</strong> (<code>player_id</code>) 為分群依據，篩選選手生涯 <strong>打擊率最高</strong> 的年份。</p>
+<pre class="r"><code>battings.raw &lt;- read.csv(&quot;raw/batting.csv&quot;)
+
+battings.year_player_id_ab_h &lt;- data.table(data.frame(battings.raw$year, battings.raw$player_id, battings.raw$ab, battings.raw$h))
+names(battings.year_player_id_ab_h) &lt;- c(&quot;year&quot;, &quot;player_id&quot;, &quot;ab&quot;, &quot;h&quot;)
+suppressWarnings(battings.year_player_id_rate &lt;- battings.year_player_id_ab_h[, rate := batting_rate(h, ab)])
+
+battings.player_max_rate &lt;- battings.year_player_id_rate[, .SD[which.max(rate)], by=player_id]
+setkey(battings.player_max_rate, player_id)</code></pre>
+<p>合併 <code>battings.player_max_rate</code> 與 <code>players.table</code> 兩張表。</p>
+<pre class="r"><code>battings.with_birth_year &lt;- merge(players.table, battings.player_max_rate)
+battings.with_age &lt;- battings.with_birth_year[, age := year - birth_year]</code></pre>
+<p>計算選手在巔峰年時的年齡。</p>
+<pre class="r"><code>mean(battings.with_age$age, na.rm=TRUE)</code></pre>
+<pre><code>## [1] 26.39042</code></pre>
+</div>
+<div id="-2" class="section level4">
+<h4>結論</h4>
+<p>以打擊者而言，選手的巔峰年齡約在 <strong>26</strong> 歲時。</p>
+</div>
+</div>
 </div>
 <div id="are-the-best-performers-selected-for-all-star-game" class="section level2">
 <h2>Are the best performers selected for all-star game?</h2>
@@ -178,7 +234,7 @@ DT::datatable(fieldings.aggregated)</code></pre>
 <blockquote>
 <p>多少次保送會讓先發球員被換下來?</p>
 </blockquote>
-<div id="-1" class="section level3">
+<div id="-3" class="section level3">
 <h3>分析</h3>
 <p>載入原始資料，這次使用的是 <code>raw/picthing.csv</code>，表格包含每季比賽 <strong>球員</strong> (<code>player_id</code>, player) 、 <strong>先發次數</strong> (<code>gs</code>, games started) 與 <strong>季保送次數</strong> (<code>bb</code>, walks)。</p>
 <pre class="r"><code>pitchings.raw &lt;- read.csv(&quot;raw/pitching.csv&quot;)</code></pre>
@@ -194,7 +250,7 @@ names(pitchings.aggregated) &lt;- c(&quot;player&quot;, &quot;walks_mean&quot;)<
 <pre class="r"><code>mean(pitchings.aggregated$walks_mean)</code></pre>
 <pre><code>## [1] 2.494491</code></pre>
 </div>
-<div id="-1" class="section level3">
+<div id="-3" class="section level3">
 <h3>結論</h3>
 <p>球員每場平均投出 <strong>2.4944911</strong> 次保送會被換下場。</p>
 </div>
@@ -204,10 +260,8 @@ names(pitchings.aggregated) &lt;- c(&quot;player&quot;, &quot;walks_mean&quot;)<
 <blockquote>
 <p>容易打出滾地安打的球員會有比較低的打擊率嗎?</p>
 </blockquote>
-<div id="-2" class="section level3">
+<div id="-4" class="section level3">
 <h3>分析</h3>
-<p>首先定義打擊率公式。</p>
-<pre class="r"><code>batting_rate &lt;- function(h, ab) ifelse(ab == 0, 0, h / ab)</code></pre>
 <p>導入打擊者資料。</p>
 <pre class="r"><code>battings.raw &lt;- read.csv(&quot;raw/batting.csv&quot;)
 battings.table &lt;- data.table(battings.raw)</code></pre>
@@ -219,7 +273,7 @@ battings.cor &lt;- battings.gidp_rate[, c(&quot;cor&quot;) := cor(g_idp, rate), 
 <pre class="r"><code>cor(battings.gidp_rate$g_idp, battings.gidp_rate$rate, use=&quot;complete&quot;)</code></pre>
 <pre><code>## [1] 0.0401226</code></pre>
 </div>
-<div id="-2" class="section level3">
+<div id="-4" class="section level3">
 <h3>結論</h3>
 <p>GIDP 與打擊率之間的相關係數為 <strong>0.0401226</strong>，屬於 <strong>低度相關</strong> (<code>0 &lt; r &lt; 0.3</code>)，即 GIDP 與打擊率 <strong>幾乎沒有關聯</strong>，亦即原題目論述 <strong>不成立</strong>。</p>
 </div>

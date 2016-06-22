@@ -21,6 +21,12 @@ if (!require("DT")) {
 }
 ```
 
+首先定義打擊率公式。
+
+```{r}
+batting_rate <- function(h, ab) ifelse(ab == 0, 0, h / ab)
+```
+
 ## Is there a most error-prone position?
 
 > 在棒球中有一個失誤率最高的守備位置嗎?
@@ -57,6 +63,82 @@ DT::datatable(fieldings.aggregated)
 ## When do players at different positions peak?
 
 > 各個不同位置的球員的巔峰期分別在什麼時候?
+
+分成 **投手** 跟 **打擊者**。在開始之前先整理選手的資料表 `raw/player.csv` 方便之後取得 **選手** (`player_id`) 與 **出生年** (`birth_year`)。
+
+```{r}
+players.raw <- read.csv("raw/player.csv")
+players.table <- data.table(data.frame(players.raw$player_id, players.raw$birth_year))
+names(players.table) <- c("player_id", "birth_year")
+setkey(players.table, player_id)
+```
+
+### 投手
+
+#### 分析
+
+選取 `raw/pitching.csv`，以 **選手** (`player_id`) 為分群依據，篩選選手生涯 **ERA 最低** 的年份。
+
+```{r}
+pitchings.raw <- read.csv("raw/pitching.csv")
+
+pitchings.year_player_id_era <- data.table(data.frame(pitchings.raw$year, pitchings.raw$player_id, pitchings.raw$era))
+names(pitchings.year_player_id_era) <- c("year", "player_id", "era")
+
+pitchings.player_min_era <- pitchings.year_player_id_era[, .SD[which.min(era)], by=player_id]
+setkey(pitchings.player_min_era, player_id)
+```
+
+合併 `pitchings.player_min_era` 與 `players.table` 兩張表。
+
+```{r}
+pitchings.with_birth_year <- merge(players.table, pitchings.player_min_era)
+pitchings.with_age <- pitchings.with_birth_year[, age := year - birth_year]
+```
+
+計算選手在巔峰年時的年齡。
+
+```{r}
+mean(pitchings.with_age$age, na.rm=TRUE)
+```
+
+#### 結論
+
+以投手而言，選手的巔峰年齡約在 **`r as.integer(mean(pitchings.with_age$age, na.rm=TRUE))`** 歲時。
+
+### 打擊者
+
+#### 分析
+
+選取 `raw/batting.csv`，以 **選手** (`player_id`) 為分群依據，篩選選手生涯 **打擊率最高** 的年份。
+
+```{r}
+battings.raw <- read.csv("raw/batting.csv")
+
+battings.year_player_id_ab_h <- data.table(data.frame(battings.raw$year, battings.raw$player_id, battings.raw$ab, battings.raw$h))
+names(battings.year_player_id_ab_h) <- c("year", "player_id", "ab", "h")
+suppressWarnings(battings.year_player_id_rate <- battings.year_player_id_ab_h[, rate := batting_rate(h, ab)])
+
+battings.player_max_rate <- battings.year_player_id_rate[, .SD[which.max(rate)], by=player_id]
+setkey(battings.player_max_rate, player_id)
+```
+
+合併 `battings.player_max_rate` 與 `players.table` 兩張表。
+
+```{r}
+battings.with_birth_year <- merge(players.table, battings.player_max_rate)
+battings.with_age <- battings.with_birth_year[, age := year - birth_year]
+```
+
+計算選手在巔峰年時的年齡。
+
+```{r}
+mean(battings.with_age$age, na.rm=TRUE)
+```
+
+#### 結論
+
+以打擊者而言，選手的巔峰年齡約在 **`r as.integer(mean(battings.with_age$age, na.rm=TRUE))`** 歲時。
 
 ## Are the best performers selected for all-star game?
 
@@ -105,12 +187,6 @@ mean(pitchings.aggregated$walks_mean)
 > 容易打出滾地安打的球員會有比較低的打擊率嗎?
 
 ### 分析
-
-首先定義打擊率公式。
-
-```{r}
-batting_rate <- function(h, ab) ifelse(ab == 0, 0, h / ab)
-```
 
 導入打擊者資料。
 
