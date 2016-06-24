@@ -1,6 +1,6 @@
 ---
 title: "The History of Baseball"
-author: "Heng-Yi Wu <101306008@nccu.edu.tw>"
+author: "陳秋婷、楊曜誠、周明甫、吳恒毅"
 date: "2016年6月19日"
 output: html_document
 ---
