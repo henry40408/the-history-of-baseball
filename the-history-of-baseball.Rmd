@@ -163,11 +163,18 @@ library(data.table)
 pitchings.table <- data.table(pitchings.raw)
 ```
 
-以球員為資料分組，取得球員每季平均每場比賽保送次數。由於球員一旦被換下場之後就不會再上場，所以不必擔心需要合併計算的問題。
+首先定義球員的 **平均每場保送** 公式為 **先發場數** (GS) 減去 **完投場數** (GC)，再以 **保送次數** (BB) 除之。由於完封不會有被換下場的問題，因此要予以扣除。
 
 ```{r}
-walks_per_game <- function(gs, bb) ifelse(!gs, 0, bb/gs)
-pitchings.walks_per_game <- pitchings.table[, c("wpg") := walks_per_game(pitchings.table$gs, pitchings.table$bb), with=FALSE]
+walks_per_game <- function(gs, cg, bb) ifelse(gs-cg == 0, 0, bb/(gs-cg))
+```
+
+由於球員一旦被換下場之後就不會再上場，所以不必擔心需要合併計算的問題。
+
+計算個別球員的平均。
+
+```{r}
+pitchings.walks_per_game <- pitchings.table[, c("wpg") := walks_per_game(pitchings.table$gs, pitchings.table$cg, pitchings.table$bb), with=FALSE]
 pitchings.aggregated <- pitchings.walks_per_game[, mean(wpg, na.rm=TRUE), by=player_id]
 names(pitchings.aggregated) <- c("player", "walks_mean")
 ```
@@ -197,21 +204,27 @@ battings.table <- data.table(battings.raw)
 
 為每位打者加上打擊率資料。
 
+先定義計算平均 GIDP 的公式。
+
 ```{r}
-battings.with_rate <- battings.table[, c("rate") := batting_rate(battings.table$ab, battings.table$h), with=FALSE]
-battings.gidp_rate <- battings.with_rate[, c("g_idp", "rate"), with=FALSE]
-battings.cor <- battings.gidp_rate[, c("cor") := cor(g_idp, rate), with=FALSE]
+gidp_rate <- function(g_idp, ab) ifelse(ab == 0, 0, g_idp/ab)
+```
+
+```{r}
+battings.with_gidp_rate <- battings.table[, c("gidp_rate") := gidp_rate(battings.table$g_idp, battings.table$ab), with=FALSE]
+battings.with_rate <- battings.with_gidp_rate[, c("batting_rate") := batting_rate(battings.table$ab, battings.table$h), with=FALSE]
+battings.gidp_batting_rate <- battings.with_rate[, c("gidp_rate", "batting_rate"), with=FALSE]
 ```
 
 最後使用相關係數分析。
 
 ```{r}
-cor(battings.gidp_rate$g_idp, battings.gidp_rate$rate, use="complete")
+cor(battings.gidp_batting_rate$gidp_rate, battings.gidp_batting_rate$batting_rate, use="complete")
 ```
 
 ### 結論
 
-GIDP 與打擊率之間的相關係數為 **`r cor(battings.gidp_rate$g_idp, battings.gidp_rate$rate, use="complete")`**，屬於 **低度相關** (`0 < r < 0.3`)，即 GIDP 與打擊率 **幾乎沒有關聯**，亦即原題目論述 **不成立**。
+GIDP 與打擊率之間的相關係數為 **`r cor(battings.gidp_batting_rate$gidp_rate, battings.gidp_batting_rate$batting_rate, use="complete")`**，屬於 **低度相關** (`0 < r < 0.3`)，即 GIDP 與打擊率 **幾乎沒有關聯**，亦即原題目論述 **不成立**。
 
 ## Which players are the most likely to choke during the post-season?
 

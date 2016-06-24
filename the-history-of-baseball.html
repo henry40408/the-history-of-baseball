@@ -152,8 +152,8 @@ names(fieldings.aggregated) &lt;- c(&quot;position&quot;, &quot;error_rate_mean&
 <p>輸出資料。</p>
 <pre class="r"><code>library(DT)
 DT::datatable(fieldings.aggregated)</code></pre>
-<div id="htmlwidget-8231" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-8231">{"x":{"data":[["1","2","3","4","5","6","7","8","9","10","11"],["SS","2B","OF","C","1B","3B","P","LF","RF","CF","DH"],[9.60904670949818,6.16286953094206,3.25531536023363,5.4592479309104,3.72109601247494,6.15562292478706,1.10618486633439,1.00236714404071,1.08293713681986,1.3540799710512,null]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> \u003c/th>\n      <th>position\u003c/th>\n      <th>error_rate_mean\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"columnDefs":[{"className":"dt-right","targets":2},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"callback":null,"filter":"none"},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-182" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-182">{"x":{"data":[["1","2","3","4","5","6","7","8","9","10","11"],["SS","2B","OF","C","1B","3B","P","LF","RF","CF","DH"],[9.60904670949818,6.16286953094206,3.25531536023363,5.4592479309104,3.72109601247494,6.15562292478706,1.10618486633439,1.00236714404071,1.08293713681986,1.3540799710512,null]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> \u003c/th>\n      <th>position\u003c/th>\n      <th>error_rate_mean\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"columnDefs":[{"className":"dt-right","targets":2},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"callback":null,"filter":"none"},"evals":[],"jsHooks":[]}</script>
 </div>
 <div class="section level3">
 <h3>結論</h3>
@@ -241,18 +241,20 @@ battings.with_age &lt;- battings.with_birth_year[, age := year - birth_year]</co
 <p>一樣使用 <code>data.table</code> 分析數據。</p>
 <pre class="r"><code>library(data.table)
 pitchings.table &lt;- data.table(pitchings.raw)</code></pre>
-<p>以球員為資料分組，取得球員每季平均每場比賽保送次數。由於球員一旦被換下場之後就不會再上場，所以不必擔心需要合併計算的問題。</p>
-<pre class="r"><code>walks_per_game &lt;- function(gs, bb) ifelse(!gs, 0, bb/gs)
-pitchings.walks_per_game &lt;- pitchings.table[, c(&quot;wpg&quot;) := walks_per_game(pitchings.table$gs, pitchings.table$bb), with=FALSE]
+<p>首先定義球員的 <strong>平均每場保送</strong> 公式為 <strong>先發場數</strong> (GS) 減去 <strong>完投場數</strong> (GC)，再以 <strong>保送次數</strong> (BB) 除之。由於完封不會有被換下場的問題，因此要予以扣除。</p>
+<pre class="r"><code>walks_per_game &lt;- function(gs, cg, bb) ifelse(gs-cg == 0, 0, bb/(gs-cg))</code></pre>
+<p>由於球員一旦被換下場之後就不會再上場，所以不必擔心需要合併計算的問題。</p>
+<p>計算個別球員的平均。</p>
+<pre class="r"><code>pitchings.walks_per_game &lt;- pitchings.table[, c(&quot;wpg&quot;) := walks_per_game(pitchings.table$gs, pitchings.table$cg, pitchings.table$bb), with=FALSE]
 pitchings.aggregated &lt;- pitchings.walks_per_game[, mean(wpg, na.rm=TRUE), by=player_id]
 names(pitchings.aggregated) &lt;- c(&quot;player&quot;, &quot;walks_mean&quot;)</code></pre>
 <p>再統計所有球員的平均。</p>
 <pre class="r"><code>mean(pitchings.aggregated$walks_mean)</code></pre>
-<pre><code>## [1] 2.494491</code></pre>
+<pre><code>## [1] 3.584444</code></pre>
 </div>
 <div id="-3" class="section level3">
 <h3>結論</h3>
-<p>球員每場平均投出 <strong>2.4944911</strong> 次保送會被換下場。</p>
+<p>球員每場平均投出 <strong>3.584444</strong> 次保送會被換下場。</p>
 </div>
 </div>
 <div id="do-players-with-a-high-ground-into-double-play-gidp-have-a-lower-batting-average" class="section level2">
@@ -266,16 +268,18 @@ names(pitchings.aggregated) &lt;- c(&quot;player&quot;, &quot;walks_mean&quot;)<
 <pre class="r"><code>battings.raw &lt;- read.csv(&quot;raw/batting.csv&quot;)
 battings.table &lt;- data.table(battings.raw)</code></pre>
 <p>為每位打者加上打擊率資料。</p>
-<pre class="r"><code>battings.with_rate &lt;- battings.table[, c(&quot;rate&quot;) := batting_rate(battings.table$ab, battings.table$h), with=FALSE]
-battings.gidp_rate &lt;- battings.with_rate[, c(&quot;g_idp&quot;, &quot;rate&quot;), with=FALSE]
-battings.cor &lt;- battings.gidp_rate[, c(&quot;cor&quot;) := cor(g_idp, rate), with=FALSE]</code></pre>
+<p>先定義計算平均 GIDP 的公式。</p>
+<pre class="r"><code>gidp_rate &lt;- function(g_idp, ab) ifelse(ab == 0, 0, g_idp/ab)</code></pre>
+<pre class="r"><code>battings.with_gidp_rate &lt;- battings.table[, c(&quot;gidp_rate&quot;) := gidp_rate(battings.table$g_idp, battings.table$ab), with=FALSE]
+battings.with_rate &lt;- battings.with_gidp_rate[, c(&quot;batting_rate&quot;) := batting_rate(battings.table$ab, battings.table$h), with=FALSE]
+battings.gidp_batting_rate &lt;- battings.with_rate[, c(&quot;gidp_rate&quot;, &quot;batting_rate&quot;), with=FALSE]</code></pre>
 <p>最後使用相關係數分析。</p>
-<pre class="r"><code>cor(battings.gidp_rate$g_idp, battings.gidp_rate$rate, use=&quot;complete&quot;)</code></pre>
-<pre><code>## [1] 0.0401226</code></pre>
+<pre class="r"><code>cor(battings.gidp_batting_rate$gidp_rate, battings.gidp_batting_rate$batting_rate, use=&quot;complete&quot;)</code></pre>
+<pre><code>## [1] 0.0695767</code></pre>
 </div>
 <div id="-4" class="section level3">
 <h3>結論</h3>
-<p>GIDP 與打擊率之間的相關係數為 <strong>0.0401226</strong>，屬於 <strong>低度相關</strong> (<code>0 &lt; r &lt; 0.3</code>)，即 GIDP 與打擊率 <strong>幾乎沒有關聯</strong>，亦即原題目論述 <strong>不成立</strong>。</p>
+<p>GIDP 與打擊率之間的相關係數為 <strong>0.0695767</strong>，屬於 <strong>低度相關</strong> (<code>0 &lt; r &lt; 0.3</code>)，即 GIDP 與打擊率 <strong>幾乎沒有關聯</strong>，亦即原題目論述 <strong>不成立</strong>。</p>
 </div>
 </div>
 <div id="which-players-are-the-most-likely-to-choke-during-the-post-season" class="section level2">
