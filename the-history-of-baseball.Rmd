@@ -27,7 +27,7 @@ if (!require("DT")) {
 batting_rate <- function(h, ab) ifelse(ab == 0, 0, h / ab)
 ```
 
-## Is there a most error-prone position?
+## 1. Is there a most error-prone position? (吳恒毅)
 
 > 在棒球中有一個失誤率最高的守備位置嗎?
 
@@ -60,7 +60,7 @@ DT::datatable(fieldings.aggregated)
 1. 位置 **`r fieldings.aggregated$position[1]`** 平均有最高的失誤率。
 2. DH 是 **指定打擊**，不記錄失誤率，因此分析結果會顯示 **NA**。
 
-## When do players at different positions peak?
+## 2. When do players at different positions peak? (吳恒毅)
 
 > 各個不同位置的球員的巔峰期分別在什麼時候?
 
@@ -140,11 +140,100 @@ mean(battings.with_age$age, na.rm=TRUE)
 
 以打擊者而言，選手的巔峰年齡約在 **`r as.integer(mean(battings.with_age$age, na.rm=TRUE))`** 歲時。
 
-## Are the best performers selected for all-star game?
+## 3. Are the best performers selected for all-star game? (楊曜誠、陳秋婷)
 
 > 被選進明星賽的都是表現最好的球員嗎?
 
-## How many walks does it take for a starting pitcher to get pulled?
+在回答這個問提前，我們想先定議一些名詞
+
+1. 最好的球員: 我們將一支棒球隊簡單區分成投手及打擊手，分別去看他們的表現，而表現的評斷，我們依照年分分別算出投手及打擊手的防守率 (`ERA`，越低越好) 及打擊率 (`H/AB`，越高越好)，並且分別取出當年度前20%的球員成為題目所說的最好的球員。
+2. 是否都被選進明星賽: 取出最好的球員後，我們將資料與當年明星賽的球員明當做比對，若有進明星賽的最好的球員佔所有最好的球員的比例高達 **85%** 以上，那我們便可下結論證明被選進明星賽的都是表現最好的球員，反之則否。
+
+### 資料
+
+我們從 `batting.csv`、`pitching.csv`、`all_star.csv` 三個檔案分別取出 **每個年度打者的打擊率** 和 **姓名 id**、**投手的ERA** 和 **姓名id**、**有選入明星賽的姓名id**。
+
+### 程式碼 & 結果
+
+#### 打擊手
+
+```
+all_star <- read.csv("raw/all_star.csv", header=T, sep=",")
+data <- read.csv("raw/batting.csv", header=T, sep=",")
+
+test1 <- function(y,n){
+  total <- 0
+  for(i in n:nrow(data)){
+      if(data$year[i]==y){
+      total=total+1
+      }else{
+          break
+      }
+  }
+  return(total)
+}
+
+test <- function(y,n,total){
+  best <- round(total*0.2)
+  p <- c()
+  end <- 0
+  d <- data[order(h, decreasing=T), ]
+  pi = 1
+  for (j in 1:nrow(data)) {
+    if (d$year[j] == y) {
+          p[pi] <- as.character(d$player_id[j])
+          pi <- pi +1
+          end <- end + 1
+      }
+      if (end == best) {
+          break
+      }
+  }
+  success <- 0
+  for (i in 1:best) {
+    for (k in 1:nrow(all_star)) {
+      if (all_star$year[k] == y) {
+        if (all_star$player_id[k] == p[i]) {
+                success <- success + 1
+            }
+        }
+    }
+  }
+  return(success/best)
+}
+
+eachT <- c()
+eachTT <- c()
+index <- 1
+nowi <- 25013
+for (i in 1933:2015) {
+  eachT[index] <- nowi
+  a <- test1(i, nowi)
+  eachTT[index] <- a
+  nowi <- nowi + a
+  index <- index + 1
+}
+final <- c()
+start <- 1933
+for (i in 1:83) {
+  final[i] <- test(start, eachT[i], eachTT[i])
+  start <- start + 1
+}
+final
+```
+
+結果:
+
+```
+[1] 0.06122449 0.09615385 0.07766990 0.09803922 0.07619048 0.10377358
+[7] 0.08620690 0.12962963 0.03448276 0.12037037 0.13513514 0.09649123
+[13] 0.06896552 0.07352941 0.14655172 0.09565217 0.06086957 0.15652174
+[19] 0.06504065 0.06349206 0.09401709 0.10434783 0.08396947 0.07258065
+[25] 0.09756098 0.05468750 0.13492063 0.26771654 0.18571429 0.13157895
+[31] 0.08000000 0.04635762
+```
+
+## 4. How many walks does it take for a starting pitcher to get pulled? (吳恒毅)
 
 > 多少次保送會讓先發球員被換下來?
 
@@ -189,7 +278,7 @@ mean(pitchings.aggregated$walks_mean)
 
 球員每場平均投出 **`r mean(pitchings.aggregated$walks_mean)`** 次保送會被換下場。
 
-## Do players with a high ground into double play (GIDP) have a lower batting average?
+## 5. Do players with a high ground into double play (GIDP) have a lower batting average? (吳恒毅)
 
 > 容易打出滾地安打的球員會有比較低的打擊率嗎?
 
@@ -226,10 +315,67 @@ cor(battings.gidp_batting_rate$gidp_rate, battings.gidp_batting_rate$batting_rat
 
 GIDP 與打擊率之間的相關係數為 **`r cor(battings.gidp_batting_rate$gidp_rate, battings.gidp_batting_rate$batting_rate, use="complete")`**，屬於 **低度相關** (`0 < r < 0.3`)，即 GIDP 與打擊率 **幾乎沒有關聯**，亦即原題目論述 **不成立**。
 
-## Which players are the most likely to choke during the post-season?
+## 6. Which players are the most likely to choke during the post-season? (略)
 
 > 哪位球員最容易在季後在被逆轉?
 
-## Why should or shouldn’t the National League adopt the designated hitter rule?
+## 7. Why should or shouldn’t the National League adopt the designated hitter rule? (周明甫)
 
 > 聯盟應不應該採用指定打擊(不用守備只要打擊)的規則? 為什麼?
+
+```
+rm(list=ls())
+
+pitcher <- read.csv("raw/pitching.csv")
+head(pitcher)
+
+batter <- read.csv("raw/batting.csv")
+head(batter)
+
+field <- read.csv("raw/fielding.csv")
+head(fielding)
+
+dh <- subset(field, pos=="DH" ,select=c(player_id,pos))
+head(dh)
+
+u_dh <- unique(dh)
+
+p <- subset(field, pos=="P" ,select=c(player_id,pos))
+head(p)
+u_p <- unique(p)
+
+dhbatter <- merge(u_dh,batter, by="player_id")
+head(dhbatter)
+
+pbatter <- merge(u_p,batter, by="player_id")
+head(pbatter)
+
+pbatterwithab <- subset(pbatter,ab>0)
+head(pbatterwithab)
+
+pbattering_rate <- sum(pbatterwithab$h) / sum(pbatterwithab$ab)
+print(pbattering_rate)
+
+dhbatterwithab <- subset(dhbatter, ab>0)
+head(dhbatterwithab)
+
+dhbattering_rate <- sum(dhbatterwithab$h) / sum(dhbatterwithab$ab)
+print(dhbattering_rate)
+
+pitcher_batting <- merge(pitcher, batter, by=c("player_id", "year"))
+head(pitcher_batting)
+
+pitcher_batting <- subset(pitcher_batting, ab>0)
+head(pitcher_batting)
+
+batting_freq <- pitcher_batting$ab / pitcher_batting$ipouts
+head(batting_freq)
+
+pitcher_performance <- 1 / pitcher_batting$era
+head(pitcher_performance)
+
+L1 <- lm(batting_freq ~ pitcher_performance)
+summary(L1)
+fitted(L1)
+plot(batting_freq, pitcher_performance)
+```

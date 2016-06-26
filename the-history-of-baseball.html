@@ -135,8 +135,8 @@ $(document).ready(function () {
 <p>We have more ideas for analysis than games in a season, but here are a few we’d really love to see:</p>
 <p>首先定義打擊率公式。</p>
 <pre class="r"><code>batting_rate &lt;- function(h, ab) ifelse(ab == 0, 0, h / ab)</code></pre>
-<div id="is-there-a-most-error-prone-position" class="section level2">
-<h2>Is there a most error-prone position?</h2>
+<div id="is-there-a-most-error-prone-position-" class="section level2">
+<h2>1. Is there a most error-prone position? (吳恒毅)</h2>
 <blockquote>
 <p>在棒球中有一個失誤率最高的守備位置嗎?</p>
 </blockquote>
@@ -152,8 +152,8 @@ names(fieldings.aggregated) &lt;- c(&quot;position&quot;, &quot;error_rate_mean&
 <p>輸出資料。</p>
 <pre class="r"><code>library(DT)
 DT::datatable(fieldings.aggregated)</code></pre>
-<div id="htmlwidget-123" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-123">{"x":{"data":[["1","2","3","4","5","6","7","8","9","10","11"],["SS","2B","OF","C","1B","3B","P","LF","RF","CF","DH"],[9.60904670949818,6.16286953094206,3.25531536023363,5.4592479309104,3.72109601247494,6.15562292478706,1.10618486633439,1.00236714404071,1.08293713681986,1.3540799710512,null]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> \u003c/th>\n      <th>position\u003c/th>\n      <th>error_rate_mean\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"columnDefs":[{"className":"dt-right","targets":2},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"callback":null,"filter":"none"},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-1358" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1358">{"x":{"data":[["1","2","3","4","5","6","7","8","9","10","11"],["SS","2B","OF","C","1B","3B","P","LF","RF","CF","DH"],[9.60904670949818,6.16286953094206,3.25531536023363,5.4592479309104,3.72109601247494,6.15562292478706,1.10618486633439,1.00236714404071,1.08293713681986,1.3540799710512,null]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> \u003c/th>\n      <th>position\u003c/th>\n      <th>error_rate_mean\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"columnDefs":[{"className":"dt-right","targets":2},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"callback":null,"filter":"none"},"evals":[],"jsHooks":[]}</script>
 </div>
 <div class="section level3">
 <h3>結論</h3>
@@ -163,8 +163,8 @@ DT::datatable(fieldings.aggregated)</code></pre>
 </ol>
 </div>
 </div>
-<div id="when-do-players-at-different-positions-peak" class="section level2">
-<h2>When do players at different positions peak?</h2>
+<div id="when-do-players-at-different-positions-peak-" class="section level2">
+<h2>2. When do players at different positions peak? (吳恒毅)</h2>
 <blockquote>
 <p>各個不同位置的球員的巔峰期分別在什麼時候?</p>
 </blockquote>
@@ -223,14 +223,98 @@ battings.with_age &lt;- battings.with_birth_year[, age := year - birth_year]</co
 </div>
 </div>
 </div>
-<div id="are-the-best-performers-selected-for-all-star-game" class="section level2">
-<h2>Are the best performers selected for all-star game?</h2>
+<div id="are-the-best-performers-selected-for-all-star-game-" class="section level2">
+<h2>3. Are the best performers selected for all-star game? (楊曜誠、陳秋婷)</h2>
 <blockquote>
 <p>被選進明星賽的都是表現最好的球員嗎?</p>
 </blockquote>
+<p>在回答這個問提前，我們想先定議一些名詞</p>
+<ol style="list-style-type: decimal">
+<li>最好的球員: 我們將一支棒球隊簡單區分成投手及打擊手，分別去看他們的表現，而表現的評斷，我們依照年分分別算出投手及打擊手的防守率 (<code>ERA</code>，越低越好) 及打擊率 (<code>H/AB</code>，越高越好)，並且分別取出當年度前20%的球員成為題目所說的最好的球員。</li>
+<li>是否都被選進明星賽: 取出最好的球員後，我們將資料與當年明星賽的球員明當做比對，若有進明星賽的最好的球員佔所有最好的球員的比例高達 <strong>85%</strong> 以上，那我們便可下結論證明被選進明星賽的都是表現最好的球員，反之則否。</li>
+</ol>
+<div class="section level3">
+<h3>資料</h3>
+<p>我們從 <code>batting.csv</code>、<code>pitching.csv</code>、<code>all_star.csv</code> 三個檔案分別取出 <strong>每個年度打者的打擊率</strong> 和 <strong>姓名 id</strong>、<strong>投手的ERA</strong> 和 <strong>姓名id</strong>、<strong>有選入明星賽的姓名id</strong>。</p>
 </div>
-<div id="how-many-walks-does-it-take-for-a-starting-pitcher-to-get-pulled" class="section level2">
-<h2>How many walks does it take for a starting pitcher to get pulled?</h2>
+<div id="-" class="section level3">
+<h3>程式碼 &amp; 結果</h3>
+<div class="section level4">
+<h4>打擊手</h4>
+<pre><code>all_star &lt;- read.csv(&quot;raw/all_star.csv&quot;, header=T, sep=&quot;,&quot;)
+data &lt;- read.csv(&quot;raw/batting.csv&quot;, header=T, sep=&quot;,&quot;)
+
+test1 &lt;- function(y,n){
+  total &lt;- 0
+  for(i in n:nrow(data)){
+      if(data$year[i]==y){
+      total=total+1
+      }else{
+          break
+      }
+  }
+  return(total)
+}
+
+test &lt;- function(y,n,total){
+  best &lt;- round(total*0.2)
+  p &lt;- c()
+  end &lt;- 0
+  d &lt;- data[order(h, decreasing=T), ]
+  pi = 1
+  for (j in 1:nrow(data)) {
+    if (d$year[j] == y) {
+          p[pi] &lt;- as.character(d$player_id[j])
+          pi &lt;- pi +1
+          end &lt;- end + 1
+      }
+      if (end == best) {
+          break
+      }
+  }
+  success &lt;- 0
+  for (i in 1:best) {
+    for (k in 1:nrow(all_star)) {
+      if (all_star$year[k] == y) {
+        if (all_star$player_id[k] == p[i]) {
+                success &lt;- success + 1
+            }
+        }
+    }
+  }
+  return(success/best)
+}
+
+eachT &lt;- c()
+eachTT &lt;- c()
+index &lt;- 1
+nowi &lt;- 25013
+for (i in 1933:2015) {
+  eachT[index] &lt;- nowi
+  a &lt;- test1(i, nowi)
+  eachTT[index] &lt;- a
+  nowi &lt;- nowi + a
+  index &lt;- index + 1
+}
+final &lt;- c()
+start &lt;- 1933
+for (i in 1:83) {
+  final[i] &lt;- test(start, eachT[i], eachTT[i])
+  start &lt;- start + 1
+}
+final</code></pre>
+<p>結果:</p>
+<pre><code>[1] 0.06122449 0.09615385 0.07766990 0.09803922 0.07619048 0.10377358
+[7] 0.08620690 0.12962963 0.03448276 0.12037037 0.13513514 0.09649123
+[13] 0.06896552 0.07352941 0.14655172 0.09565217 0.06086957 0.15652174
+[19] 0.06504065 0.06349206 0.09401709 0.10434783 0.08396947 0.07258065
+[25] 0.09756098 0.05468750 0.13492063 0.26771654 0.18571429 0.13157895
+[31] 0.08000000 0.04635762</code></pre>
+</div>
+</div>
+</div>
+<div id="how-many-walks-does-it-take-for-a-starting-pitcher-to-get-pulled-" class="section level2">
+<h2>4. How many walks does it take for a starting pitcher to get pulled? (吳恒毅)</h2>
 <blockquote>
 <p>多少次保送會讓先發球員被換下來?</p>
 </blockquote>
@@ -257,8 +341,8 @@ names(pitchings.aggregated) &lt;- c(&quot;player&quot;, &quot;walks_mean&quot;)<
 <p>球員每場平均投出 <strong>3.584444</strong> 次保送會被換下場。</p>
 </div>
 </div>
-<div id="do-players-with-a-high-ground-into-double-play-gidp-have-a-lower-batting-average" class="section level2">
-<h2>Do players with a high ground into double play (GIDP) have a lower batting average?</h2>
+<div id="do-players-with-a-high-ground-into-double-play-gidp-have-a-lower-batting-average-" class="section level2">
+<h2>5. Do players with a high ground into double play (GIDP) have a lower batting average? (吳恒毅)</h2>
 <blockquote>
 <p>容易打出滾地安打的球員會有比較低的打擊率嗎?</p>
 </blockquote>
@@ -282,17 +366,71 @@ battings.gidp_batting_rate &lt;- battings.with_rate[, c(&quot;gidp_rate&quot;, &
 <p>GIDP 與打擊率之間的相關係數為 <strong>0.0695767</strong>，屬於 <strong>低度相關</strong> (<code>0 &lt; r &lt; 0.3</code>)，即 GIDP 與打擊率 <strong>幾乎沒有關聯</strong>，亦即原題目論述 <strong>不成立</strong>。</p>
 </div>
 </div>
-<div id="which-players-are-the-most-likely-to-choke-during-the-post-season" class="section level2">
-<h2>Which players are the most likely to choke during the post-season?</h2>
+<div id="which-players-are-the-most-likely-to-choke-during-the-post-season-" class="section level2">
+<h2>6. Which players are the most likely to choke during the post-season? (略)</h2>
 <blockquote>
 <p>哪位球員最容易在季後在被逆轉?</p>
 </blockquote>
 </div>
-<div id="why-should-or-shouldnt-the-national-league-adopt-the-designated-hitter-rule" class="section level2">
-<h2>Why should or shouldn’t the National League adopt the designated hitter rule?</h2>
+<div id="why-should-or-shouldnt-the-national-league-adopt-the-designated-hitter-rule-" class="section level2">
+<h2>7. Why should or shouldn’t the National League adopt the designated hitter rule? (周明甫)</h2>
 <blockquote>
 <p>聯盟應不應該採用指定打擊(不用守備只要打擊)的規則? 為什麼?</p>
 </blockquote>
+<pre><code>rm(list=ls())
+
+pitcher &lt;- read.csv(&quot;raw/pitching.csv&quot;)
+head(pitcher)
+
+batter &lt;- read.csv(&quot;raw/batting.csv&quot;)
+head(batter)
+
+field &lt;- read.csv(&quot;raw/fielding.csv&quot;)
+head(fielding)
+
+dh &lt;- subset(field, pos==&quot;DH&quot; ,select=c(player_id,pos))
+head(dh)
+
+u_dh &lt;- unique(dh)
+
+p &lt;- subset(field, pos==&quot;P&quot; ,select=c(player_id,pos))
+head(p)
+u_p &lt;- unique(p)
+
+dhbatter &lt;- merge(u_dh,batter, by=&quot;player_id&quot;)
+head(dhbatter)
+
+pbatter &lt;- merge(u_p,batter, by=&quot;player_id&quot;)
+head(pbatter)
+
+pbatterwithab &lt;- subset(pbatter,ab&gt;0)
+head(pbatterwithab)
+
+pbattering_rate &lt;- sum(pbatterwithab$h) / sum(pbatterwithab$ab)
+print(pbattering_rate)
+
+dhbatterwithab &lt;- subset(dhbatter, ab&gt;0)
+head(dhbatterwithab)
+
+dhbattering_rate &lt;- sum(dhbatterwithab$h) / sum(dhbatterwithab$ab)
+print(dhbattering_rate)
+
+pitcher_batting &lt;- merge(pitcher, batter, by=c(&quot;player_id&quot;, &quot;year&quot;))
+head(pitcher_batting)
+
+pitcher_batting &lt;- subset(pitcher_batting, ab&gt;0)
+head(pitcher_batting)
+
+batting_freq &lt;- pitcher_batting$ab / pitcher_batting$ipouts
+head(batting_freq)
+
+pitcher_performance &lt;- 1 / pitcher_batting$era
+head(pitcher_performance)
+
+L1 &lt;- lm(batting_freq ~ pitcher_performance)
+summary(L1)
+fitted(L1)
+plot(batting_freq, pitcher_performance)</code></pre>
 </div>
 </div>
 
